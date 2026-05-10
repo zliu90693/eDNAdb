@@ -1,15 +1,11 @@
-"""
-config.py - 全局配置文件
-修改此文件以适配你的项目需求
-"""
+# 全局配置文件
 
-# ─── NCBI 配置 ────────────────────────────────────────────────
-# 强烈建议注册 NCBI API Key（免费）：
+# NCBI 配置
 # https://www.ncbi.nlm.nih.gov/account/
-NCBI_API_KEY = ""           # 留空则限速 3 req/s；填入后提升至 10 req/s
-NCBI_EMAIL = "your@email.com"   # NCBI 要求提供联系邮箱
+NCBI_API_KEY = "aa07c8e806953ff87a780473daeb7564ed08" # 留空有限速, 3 req/s；填入后提升至 10 req/s
+NCBI_EMAIL = "zliu90693@gmail.com"
 
-# ─── 目标条形码标记 ────────────────────────────────────────────
+# 目标条形码标记
 # 可选: COI, ITS, ITS2, rbcL, matK, 16S, 18S
 TARGET_MARKERS = ["COI"]
 
@@ -24,7 +20,7 @@ MARKER_QUERY_MAP = {
     "18S":  '(18S[Gene] OR "18S ribosomal"[Title])',
 }
 
-# ─── 序列质量过滤 ──────────────────────────────────────────────
+# 序列质量过滤
 SEQ_LENGTH_FILTER = {
     "COI":  (300, 900),
     "ITS":  (200, 800),
@@ -36,13 +32,13 @@ SEQ_LENGTH_FILTER = {
 }
 MAX_AMBIGUOUS_RATIO = 0.05  # 序列中模糊碱基（N）比例上限
 
-# ─── 请求配置 ──────────────────────────────────────────────────
-NCBI_BATCH_SIZE = 100       # 每次 efetch 的记录数
-BOLD_TIMEOUT = 90           # BOLD 请求超时（秒）
-RETRY_TIMES = 3             # 失败重试次数
-RETRY_DELAY = 5             # 重试等待（秒）
+# 请求配置
+NCBI_BATCH_SIZE = 100 # 每次 efetch 的记录数
+BOLD_TIMEOUT = 90 # BOLD 请求超时（秒）
+RETRY_TIMES = 3 # 失败重试次数
+RETRY_DELAY = 5 # 重试等待（秒）
 
-# ─── 输出配置 ──────────────────────────────────────────────────
-DB_PATH = "barcode_db.sqlite"       # SQLite 数据库路径
-FASTA_OUTPUT_DIR = "fasta_output"   # FASTA 导出目录
-LOG_FILE = "fetch.log"              # 日志文件
+# 输出配置
+DB_PATH = "barcode_db.sqlite" # SQLite 数据库路径
+FASTA_OUTPUT_DIR = "fasta_output" # FASTA 导出目录
+LOG_FILE = "fetch.log" # 日志文件

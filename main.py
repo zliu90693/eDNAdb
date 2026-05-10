@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""
-main.py - 命令行入口
-用法见 README.md 或运行 python main.py --help
-"""
+
+# 命令行入口, 用法见 README.md 或运行 python main.py --help
+
 
 import argparse
 import sys
@@ -11,8 +10,7 @@ from config import TARGET_MARKERS
 
 
 def cmd_fetch(args):
-    """执行数据获取"""
-    # 优先用命令行物种列表，否则读取文件
+    # 执行数据获取, 优先用命令行物种列表，否则读取文件
     if args.species:
         species_list = [s.strip() for s in args.species.split(",") if s.strip()]
     elif args.file:
@@ -33,7 +31,7 @@ def cmd_fetch(args):
 
 
 def cmd_export(args):
-    """执行导出"""
+    # 执行导出
     run_export(
         output_dir=args.output,
         marker=args.marker or None,
@@ -42,7 +40,7 @@ def cmd_export(args):
 
 
 def cmd_stats(_args):
-    """打印统计"""
+    # 打印统计
     print_stats()
 
 
@@ -70,7 +68,7 @@ def main():
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # ── fetch 子命令 ──────────────────────────────────────────
+    # fetch 子命令
     fetch_p = subparsers.add_parser("fetch", help="从 NCBI/BOLD 获取条形码数据")
     fetch_p.add_argument(
         "--file", "-f",
@@ -104,7 +102,7 @@ def main():
     )
     fetch_p.set_defaults(func=cmd_fetch)
 
-    # ── export 子命令 ─────────────────────────────────────────
+    # export 子命令
     export_p = subparsers.add_parser("export", help="将数据库导出为 FASTA 文件")
     export_p.add_argument(
         "--output", "-o",
@@ -121,11 +119,11 @@ def main():
     )
     export_p.set_defaults(func=cmd_export)
 
-    # ── stats 子命令 ──────────────────────────────────────────
+    # stats 子命令
     stats_p = subparsers.add_parser("stats", help="查看数据库统计信息")
     stats_p.set_defaults(func=cmd_stats)
 
-    # ── 解析并执行 ────────────────────────────────────────────
+    # 解析并执行
     args = parser.parse_args()
     args.func(args)
 

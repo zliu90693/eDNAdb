@@ -1,2 +1,5 @@
 *.fasta
 eDNAdb
+barcode_db.sqlite
+.vscode/
+__pycache__/

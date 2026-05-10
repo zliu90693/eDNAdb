@@ -1,0 +1,24 @@
+2026-05-10 08:49:40 [INFO] 数据库已初始化：barcode_db.sqlite
+2026-05-10 08:49:40 [INFO] ============================================================
+2026-05-10 08:49:40 [INFO] 任务开始: 7 个分类群 × 1 个标记
+2026-05-10 08:49:40 [INFO] 数据源: BOTH  |  标记: COI
+2026-05-10 08:49:40 [INFO] ============================================================
+2026-05-10 08:49:40 [INFO] 
+[1/7] 处理: Solenopsis invicta
+2026-05-10 08:49:40 [INFO] [NCBI] 开始获取: Solenopsis invicta / COI
+2026-05-10 08:49:41 [INFO] [NCBI] Solenopsis invicta / COI: 找到 347 条记录, 获取前 347 条
+2026-05-10 08:49:49 [INFO] [NCBI] Solenopsis invicta / COI: 获取 347 条, 过滤后 347 条
+2026-05-10 08:49:49 [INFO]   [NCBI] Solenopsis invicta/COI: 入库 347 条，跳过重复 0 条
+2026-05-10 08:49:50 [INFO] [BOLD] 开始获取: Solenopsis invicta / COI (query marker: COI-5P)
+2026-05-10 08:49:52 [WARNING] [BOLD] HTTP 错误 404: Solenopsis invicta
+2026-05-10 08:49:52 [WARNING] [BOLD] Solenopsis invicta / COI: 无响应, 尝试仅用物种名重试
+2026-05-10 08:49:58 [WARNING] [BOLD] HTTP 错误 404: Solenopsis invicta
+2026-05-10 08:49:58 [INFO] [BOLD] Solenopsis invicta / COI: 解析 0 条, 过滤后 0 条
+2026-05-10 08:49:58 [INFO]   → Solenopsis invicta 累计入库: 347 条
+2026-05-10 08:50:00 [INFO] 
+[2/7] 处理: Solenopsis geminata
+2026-05-10 08:50:00 [INFO] [NCBI] 开始获取: Solenopsis geminata / COI
+2026-05-10 08:50:01 [INFO] [NCBI] Solenopsis geminata / COI: 找到 666 条记录, 获取前 500 条
+2026-05-10 08:50:07 [INFO] [NCBI] Solenopsis geminata / COI: 获取 500 条, 过滤后 499 条
+2026-05-10 08:50:07 [INFO]   [NCBI] Solenopsis geminata/COI: 入库 499 条，跳过重复 0 条
+2026-05-10 08:50:08 [INFO] [BOLD] 开始获取: Solenopsis geminata / COI (query marker: COI-5P)

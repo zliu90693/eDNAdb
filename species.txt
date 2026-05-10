@@ -6,16 +6,15 @@
 #   2. 属名（单个词）：获取整属所有物种（BOLD 更有效，NCBI 仍为属名搜索）
 #
 # ─── 示例：入侵物种 ────────────────────────────────────────────
-Harmonia axyridis
 Solenopsis invicta
-Bemisia tabaci
-Lycorma delicatula
+Solenopsis geminata
+Frankliniella occidentalis
 
 # ─── 示例：近缘本土物种 ───────────────────────────────────────
-Harmonia yedoensis
-Harmonia octomaculata
-Solenopsis geminata
-Solenopsis richteri
+Solenopsis jacoti
+Solenopsis fugax
+Solenopsis tipuna
+Frankliniella intonsa
 
 # ─── 也可以用属名批量获取（推荐配合 BOLD）──────────────────────
 # Harmonia

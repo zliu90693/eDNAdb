@@ -1,7 +1,5 @@
-"""
-database.py - 本地 SQLite 数据库管理
-负责建表、插入、查询、去重和导出
-"""
+# 本地 SQLite 数据库管理
+# 负责建表、插入、查询、去重和导出
 
 import sqlite3
 import os
@@ -13,14 +11,14 @@ logger = logging.getLogger(__name__)
 
 
 def get_connection():
-    """获取数据库连接"""
+    # 获取数据库连接
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row  # 支持按列名访问
     return conn
 
 
 def init_db():
-    """初始化数据库，建表（幂等操作）"""
+    # 初始化数据库，建表（幂等操作）
     conn = get_connection()
     c = conn.cursor()
     c.executescript("""
@@ -65,10 +63,8 @@ def init_db():
 
 
 def insert_records(records: list[dict]) -> tuple[int, int]:
-    """
-    批量插入记录，自动跳过重复 accession。
-    返回 (插入数, 跳过数)
-    """
+    # 批量插入记录，自动跳过重复 accession。
+    # 返回 (插入数, 跳过数)
     if not records:
         return 0, 0
 
@@ -115,7 +111,7 @@ def insert_records(records: list[dict]) -> tuple[int, int]:
 
 def log_fetch(species: str, source: str, marker: str,
               status: str, count: int = 0, message: str = ""):
-    """记录每次抓取的状态"""
+    # 记录每次抓取的状态
     conn = get_connection()
     conn.execute("""
         INSERT INTO fetch_log (species, source, marker, status, count, message, fetched_at)
@@ -126,7 +122,7 @@ def log_fetch(species: str, source: str, marker: str,
 
 
 def get_stats() -> dict:
-    """获取数据库统计信息"""
+    # 获取数据库统计信息
     conn = get_connection()
     c = conn.cursor()
 
@@ -154,10 +150,8 @@ def get_stats() -> dict:
 
 
 def export_fasta(output_dir: str, marker: str = None, species: str = None):
-    """
-    将数据库记录导出为 FASTA 文件。
-    可按 marker 或 species 过滤。
-    """
+    # 将数据库记录导出为 FASTA 文件
+    # 可按 marker 或 species 过滤
     os.makedirs(output_dir, exist_ok=True)
     conn = get_connection()
     c = conn.cursor()
@@ -206,7 +200,7 @@ def export_fasta(output_dir: str, marker: str = None, species: str = None):
 
 def query_records(species: str = None, marker: str = None,
                   source: str = None, min_length: int = None) -> list:
-    """灵活查询记录"""
+    # 灵活查询记录
     conn = get_connection()
     c = conn.cursor()
     query = "SELECT * FROM barcodes WHERE 1=1"

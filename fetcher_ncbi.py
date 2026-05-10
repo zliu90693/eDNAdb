@@ -1,7 +1,4 @@
-"""
-fetcher_ncbi.py - NCBI Entrez E-utilities 数据获取模块
-直接使用 requests，不依赖 Biopython
-"""
+# NCBI Entrez E-utilities 数据获取模块, 直接使用 requests, 不依赖 Biopython
 
 import re
 import time
@@ -25,7 +22,7 @@ NCBI_BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
 
 
 def _make_session() -> requests.Session:
-    """创建带重试机制的 Session"""
+    # 创建带重试机制的 Session
     session = requests.Session()
     retry = Retry(
         total=RETRY_TIMES,
@@ -38,13 +35,13 @@ def _make_session() -> requests.Session:
 
 
 def _rate_limit():
-    """根据是否有 API Key 控制请求速率"""
+    # 根据是否有 API Key 控制请求速率
     delay = 0.11 if NCBI_API_KEY else 0.34
     time.sleep(delay)
 
 
 def _build_params(extra: dict) -> dict:
-    """构建基础请求参数"""
+    # 构建基础请求参数
     params = {"email": NCBI_EMAIL}
     if NCBI_API_KEY:
         params["api_key"] = NCBI_API_KEY
@@ -52,16 +49,11 @@ def _build_params(extra: dict) -> dict:
     return params
 
 
-# ──────────────────────────────────────────────────────────────
 # 搜索
-# ──────────────────────────────────────────────────────────────
 
 def search_ncbi(session: requests.Session, species: str,
                 marker: str, retmax: int = 500) -> list[str]:
-    """
-    搜索 NCBI nucleotide 数据库，返回 GI/UID 列表。
-    自动处理超过 retmax 的结果（usehistory）。
-    """
+    # 搜索 NCBI nucleotide 数据库, 返回 GI/UID 列表。自动处理超过 retmax 的结果 (usehistory) 。
     length_range = SEQ_LENGTH_FILTER.get(marker, (200, 2000))
     marker_query = MARKER_QUERY_MAP.get(marker, f"{marker}[Gene]")
 
@@ -91,18 +83,13 @@ def search_ncbi(session: requests.Session, species: str,
     count = int(data.get("count", 0))
     id_list = data.get("idlist", [])
 
-    logger.info(f"[NCBI] {species} / {marker}: 找到 {count} 条记录，获取前 {len(id_list)} 条")
+    logger.info(f"[NCBI] {species} / {marker}: 找到 {count} 条记录, 获取前 {len(id_list)} 条")
     return id_list
 
-
-# ──────────────────────────────────────────────────────────────
-# 获取序列（GenBank XML 格式，便于解析元数据）
-# ──────────────────────────────────────────────────────────────
+# 获取序列 (GenBank XML 格式, 便于解析元数据) 
 
 def fetch_genbank_xml(session: requests.Session, id_list: list[str]) -> list[dict]:
-    """
-    批量获取 GenBank 记录（XML 格式），解析为标准化字典列表。
-    """
+    # 批量获取 GenBank 记录 (XML 格式) , 解析为标准化字典列表。
     all_records = []
     total = len(id_list)
 
@@ -132,7 +119,7 @@ def fetch_genbank_xml(session: requests.Session, id_list: list[str]) -> list[dic
 
 
 def _parse_genbank_xml(xml_text: str) -> list[dict]:
-    """解析 GenBank XML，提取所需字段"""
+    # 解析 GenBank XML, 提取所需字段
     records = []
     try:
         root = ET.fromstring(xml_text)
@@ -200,7 +187,7 @@ def _parse_genbank_xml(xml_text: str) -> list[dict]:
                     elif name == "product" and not rec["marker"]:
                         rec["marker"] = _normalize_marker(value)
 
-        # 若 feature 中未获取 marker，从描述推断
+        # 若 feature 中未获取 marker, 从描述推断
         if not rec["marker"]:
             rec["marker"] = _infer_marker_from_description(rec["description"])
 
@@ -210,12 +197,10 @@ def _parse_genbank_xml(xml_text: str) -> list[dict]:
     return records
 
 
-# ──────────────────────────────────────────────────────────────
 # 辅助函数
-# ──────────────────────────────────────────────────────────────
 
 def _normalize_species(name: str) -> str:
-    """取二名法前两个词，去除亚种和多余注释"""
+    # 取二名法前两个词, 去除亚种和多余注释
     name = re.sub(r"\s+(subsp\.|var\.|f\.|ssp\.).*", "", name).strip()
     parts = name.split()
     if len(parts) >= 2:
@@ -224,7 +209,7 @@ def _normalize_species(name: str) -> str:
 
 
 def _normalize_marker(text: str) -> str:
-    """将基因名标准化"""
+    # 将基因名标准化
     text = text.lower()
     if any(k in text for k in ["cox1", "coi", "cytochrome c oxidase subunit 1",
                                 "cytochrome oxidase subunit i"]):
@@ -245,14 +230,12 @@ def _normalize_marker(text: str) -> str:
 
 
 def _infer_marker_from_description(desc: str) -> str:
-    """从序列描述推断标记基因"""
+    # 从序列描述推断标记基因
     return _normalize_marker(desc.lower())
 
 
 def _parse_lat_lon(text: str) -> tuple[Optional[float], Optional[float]]:
-    """
-    解析 NCBI lat_lon 格式，例如 '25.5 N 120.3 E' 或 '25.5 S 120.3 W'
-    """
+    # 解析 NCBI lat_lon 格式, 例如 '25.5 N 120.3 E' 或 '25.5 S 120.3 W'
     pattern = r"([\d.]+)\s*([NS])\s+([\d.]+)\s*([EW])"
     m = re.search(pattern, text, re.IGNORECASE)
     if m:
@@ -262,12 +245,11 @@ def _parse_lat_lon(text: str) -> tuple[Optional[float], Optional[float]]:
     return None, None
 
 
-# ──────────────────────────────────────────────────────────────
+
 # 质量过滤
-# ──────────────────────────────────────────────────────────────
 
 def quality_filter(records: list[dict], marker: str) -> list[dict]:
-    """过滤不合格序列"""
+    # 过滤不合格序列
     length_range = SEQ_LENGTH_FILTER.get(marker, (100, 5000))
     passed = []
     for rec in records:
@@ -285,9 +267,7 @@ def quality_filter(records: list[dict], marker: str) -> list[dict]:
     return passed
 
 
-# ──────────────────────────────────────────────────────────────
 # 主入口
-# ──────────────────────────────────────────────────────────────
 
 def fetch_from_ncbi(species: str, marker: str,
                     retmax: int = 500) -> list[dict]:
@@ -304,7 +284,7 @@ def fetch_from_ncbi(species: str, marker: str,
         return []
 
     raw_records = fetch_genbank_xml(session, id_list)
-    # 补全 marker（以查询 marker 为准，若解析到则保留解析值）
+    # 补全 marker (以查询 marker 为准, 若解析到则保留解析值) 
     for rec in raw_records:
         if not rec.get("marker"):
             rec["marker"] = marker
@@ -312,6 +292,6 @@ def fetch_from_ncbi(species: str, marker: str,
     filtered = quality_filter(raw_records, marker)
     logger.info(
         f"[NCBI] {species} / {marker}: "
-        f"获取 {len(raw_records)} 条，过滤后 {len(filtered)} 条"
+        f"获取 {len(raw_records)} 条, 过滤后 {len(filtered)} 条"
     )
     return filtered

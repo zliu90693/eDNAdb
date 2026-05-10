@@ -1,7 +1,5 @@
-"""
-fetcher_bold.py - BOLD Systems 数据获取模块
-使用 BOLD Public API v4，无需注册账号
-"""
+# BOLD Systems 数据获取模块
+# 使用 BOLD Public API v4, 无需注册账号
 
 import io
 import csv
@@ -20,10 +18,10 @@ from config import (
 )
 
 logger = logging.getLogger(__name__)
+ 
+BOLD_API = "https://www.boldsystems.org/index.php/API_Public" # ??? 是这个吗? 为什么用的时候出错了
 
-BOLD_API = "https://www.boldsystems.org/index.php/API_Public"
-
-# BOLD marker 名称映射（BOLD内部名称 → 标准名称）
+# BOLD marker 名称映射 (BOLD内部名称 → 标准名称) 
 BOLD_MARKER_MAP = {
     "COI-5P": "COI",
     "COI-3P": "COI",
@@ -57,7 +55,7 @@ def _make_session() -> requests.Session:
     )
     adapter = HTTPAdapter(max_retries=retry)
     session.mount("https://", adapter)
-    # 模拟浏览器，避免被屏蔽
+    # 模拟浏览器, 避免被屏蔽
     session.headers.update({
         "User-Agent": (
             "Mozilla/5.0 (compatible; BarcodeDBFetcher/1.0; "
@@ -66,17 +64,12 @@ def _make_session() -> requests.Session:
     })
     return session
 
-
-# ──────────────────────────────────────────────────────────────
 # 核心请求
-# ──────────────────────────────────────────────────────────────
 
 def _fetch_bold_tsv(session: requests.Session,
                     taxon: str, marker_query: str) -> str:
-    """
-    请求 BOLD combined API，返回 TSV 文本。
-    combined 端点同时返回序列和标本元数据。
-    """
+    # 请求 BOLD combined API, 返回 TSV 文本。
+    # combined 端点同时返回序列和标本元数据。
     params = {
         "taxon":  taxon,
         "marker": marker_query,
@@ -100,7 +93,7 @@ def _fetch_bold_tsv(session: requests.Session,
 
 
 def _fetch_bold_sequence_fasta(session: requests.Session, taxon: str) -> str:
-    """备用：仅获取序列 FASTA（当 combined 失败时）"""
+    # 备用：仅获取序列 FASTA (当 combined 失败时) 
     params = {"taxon": taxon, "format": "fasta"}
     url = f"{BOLD_API}/sequence"
     try:
@@ -110,17 +103,13 @@ def _fetch_bold_sequence_fasta(session: requests.Session, taxon: str) -> str:
     except requests.RequestException as e:
         logger.error(f"[BOLD] FASTA 备用请求失败: {e}")
         return ""
-
-
-# ──────────────────────────────────────────────────────────────
 # 解析
-# ──────────────────────────────────────────────────────────────
 
 def _parse_bold_tsv(tsv_text: str, target_species: str,
                     target_marker: str) -> list[dict]:
     """
     解析 BOLD TSV 响应。
-    BOLD TSV 列众多（约80列），仅提取关键字段。
+    BOLD TSV 列众多 (约80列) , 仅提取关键字段。
     同时按 species 和 marker 过滤。
     """
     if not tsv_text or len(tsv_text.strip()) < 10:
@@ -155,7 +144,7 @@ def _parse_bold_tsv(tsv_text: str, target_species: str,
         marker_raw = get_field(row, "marker").strip().upper()
         sequence = get_field(row, "sequence").strip().upper()
 
-        # 物种过滤：允许模糊匹配（eg. 查询属名时）
+        # 物种过滤：允许模糊匹配 (eg. 查询属名时) 
         if target_species and not _species_match(species, target_species):
             continue
 
@@ -178,7 +167,7 @@ def _parse_bold_tsv(tsv_text: str, target_species: str,
             lon = None
 
         accession = get_field(row, "accession") or ""
-        # BOLD processid 唯一，加前缀区分来源
+        # BOLD processid 唯一, 加前缀区分来源
         if accession and not accession.startswith("BOLD:"):
             accession = f"BOLD:{accession}"
 
@@ -208,7 +197,7 @@ def _parse_bold_tsv(tsv_text: str, target_species: str,
 
 
 def _species_match(found: str, target: str) -> bool:
-    """物种名匹配，支持属名查询时匹配所有该属物种"""
+    # 物种名匹配, 支持属名查询时匹配所有该属物种
     found = found.lower().strip()
     target = target.lower().strip()
     target_parts = target.split()
@@ -231,10 +220,7 @@ def _normalize_species(name: str) -> str:
         return f"{parts[0]} {parts[1]}"
     return name
 
-
-# ──────────────────────────────────────────────────────────────
 # 质量过滤
-# ──────────────────────────────────────────────────────────────
 
 def quality_filter(records: list[dict], marker: str) -> list[dict]:
     length_range = SEQ_LENGTH_FILTER.get(marker, (100, 5000))
@@ -255,9 +241,7 @@ def quality_filter(records: list[dict], marker: str) -> list[dict]:
     return passed
 
 
-# ──────────────────────────────────────────────────────────────
 # 主入口
-# ──────────────────────────────────────────────────────────────
 
 def fetch_from_bold(species: str, marker: str) -> list[dict]:
     """
@@ -272,7 +256,7 @@ def fetch_from_bold(species: str, marker: str) -> list[dict]:
     tsv = _fetch_bold_tsv(session, species, marker_query)
 
     if not tsv:
-        logger.warning(f"[BOLD] {species} / {marker}: 无响应，尝试仅用物种名重试")
+        logger.warning(f"[BOLD] {species} / {marker}: 无响应, 尝试仅用物种名重试")
         time.sleep(RETRY_DELAY)
         tsv = _fetch_bold_tsv(session, species, "")  # 不限 marker 重试
 
@@ -281,6 +265,6 @@ def fetch_from_bold(species: str, marker: str) -> list[dict]:
     filtered = quality_filter(raw_records, marker)
     logger.info(
         f"[BOLD] {species} / {marker}: "
-        f"解析 {len(raw_records)} 条，过滤后 {len(filtered)} 条"
+        f"解析 {len(raw_records)} 条, 过滤后 {len(filtered)} 条"
     )
     return filtered

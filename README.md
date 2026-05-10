@@ -9,7 +9,7 @@
 ```
 barcode_db/
 ├── main.py           # 命令行入口
-├── pipeline.py       # 主调度管线
+├── pipeline.py       # 主调度 pipeline
 ├── fetcher_ncbi.py   # NCBI E-utilities 获取模块
 ├── fetcher_bold.py   # BOLD Systems 获取模块
 ├── database.py       # SQLite 数据库管理
@@ -28,7 +28,7 @@ barcode_db/
 pip install -r requirements.txt
 ```
 
-### 2. 配置（必须）
+### 2. 配置
 
 编辑 `config.py`：
 
@@ -44,12 +44,15 @@ TARGET_MARKERS = ["COI"]         # 目标标记基因
 
 ```
 # 入侵物种
-Harmonia axyridis
 Solenopsis invicta
+Solenopsis geminata
+Frankliniella occidentalis
 
 # 近缘本土物种
-Harmonia yedoensis
-Harmonia octomaculata
+Solenopsis jacoti
+Solenopsis fugax
+Solenopsis tipuna
+Frankliniella intonsa
 ```
 
 ---
@@ -83,7 +86,7 @@ python main.py stats
 
 输出示例：
 ```
-📊 数据库统计
+  数据库统计
   总记录数:  1247
   NCBI 来源: 893
   BOLD 来源: 354
@@ -94,7 +97,7 @@ python main.py stats
     ITS           142
 
   记录最多的物种（Top 20）:
-    Harmonia axyridis                        456
+    Frankliniella occidentalis               456
     Solenopsis invicta                       321
     ...
 ```

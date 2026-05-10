@@ -1,7 +1,4 @@
-"""
-pipeline.py - 主调度管线
-协调 NCBI/BOLD 获取、数据库写入、日志记录
-"""
+# 主调度pipeline, 协调 NCBI/BOLD 获取、数据库写入、日志记录
 
 import sys
 import logging
@@ -14,10 +11,7 @@ from database import init_db, insert_records, log_fetch, get_stats, export_fasta
 from fetcher_ncbi import fetch_from_ncbi
 from fetcher_bold import fetch_from_bold
 
-# ──────────────────────────────────────────────────────────────
 # 日志配置
-# ──────────────────────────────────────────────────────────────
-
 def setup_logging(verbose: bool = False):
     level = logging.DEBUG if verbose else logging.INFO
     handlers = [
@@ -32,15 +26,9 @@ def setup_logging(verbose: bool = False):
     )
 
 
-# ──────────────────────────────────────────────────────────────
 # 物种列表读取
-# ──────────────────────────────────────────────────────────────
-
 def load_species_list(filepath: str) -> list[str]:
-    """
-    读取物种列表文件。
-    格式：每行一个物种名，# 开头为注释，支持空行。
-    """
+    # 读取物种列表文件。格式：每行一个物种名，# 开头为注释，支持空行。
     path = Path(filepath)
     if not path.exists():
         raise FileNotFoundError(f"物种列表文件不存在: {filepath}")
@@ -59,9 +47,7 @@ def load_species_list(filepath: str) -> list[str]:
     return species
 
 
-# ──────────────────────────────────────────────────────────────
 # 单物种获取
-# ──────────────────────────────────────────────────────────────
 
 def fetch_one_species(
     species: str,
@@ -69,10 +55,7 @@ def fetch_one_species(
     source: Literal["both", "ncbi", "bold"] = "both",
     ncbi_retmax: int = 500,
 ) -> int:
-    """
-    获取单个物种的单个标记数据，写入数据库。
-    返回实际插入的记录数。
-    """
+    # 获取单个物种的单个标记数据，写入数据库。返回实际插入的记录数。
     logger = logging.getLogger(__name__)
     total_inserted = 0
 
@@ -111,9 +94,7 @@ def fetch_one_species(
     return total_inserted
 
 
-# ──────────────────────────────────────────────────────────────
 # 批量运行
-# ──────────────────────────────────────────────────────────────
 
 def run_pipeline(
     species_list: list[str],
@@ -127,7 +108,7 @@ def run_pipeline(
 
     Args:
         species_list: 物种/属名列表
-        markers:      条形码标记列表（默认使用 config.TARGET_MARKERS）
+        markers:      条形码标记列表 (默认使用 config.TARGET_MARKERS) 
         source:       数据源 'both'/'ncbi'/'bold'
         ncbi_retmax:  NCBI 每次最大返回数
         verbose:      是否输出 DEBUG 日志
@@ -175,12 +156,10 @@ def run_pipeline(
     return grand_total
 
 
-# ──────────────────────────────────────────────────────────────
 # 导出工具
-# ──────────────────────────────────────────────────────────────
 
 def run_export(output_dir: str = None, marker: str = None, species: str = None):
-    """导出数据库内容为 FASTA 文件"""
+    # 导出数据库内容为 FASTA 文件
     setup_logging()
     output_dir = output_dir or FASTA_OUTPUT_DIR
     count = export_fasta(output_dir, marker=marker, species=species)
@@ -188,15 +167,13 @@ def run_export(output_dir: str = None, marker: str = None, species: str = None):
     return count
 
 
-# ──────────────────────────────────────────────────────────────
 # 统计工具
-# ──────────────────────────────────────────────────────────────
 
 def print_stats():
-    """打印当前数据库统计"""
+    # 打印当前数据库统计
     setup_logging()
     stats = get_stats()
-    print("\n📊 数据库统计")
+    print("\n数据库统计")
     print(f"  总记录数:  {stats['total']}")
     print(f"  NCBI 来源: {stats['ncbi_count']}")
     print(f"  BOLD 来源: {stats['bold_count']}")
@@ -204,6 +181,6 @@ def print_stats():
     print(f"\n  按标记分布:")
     for marker, cnt in stats["by_marker"].items():
         print(f"    {marker:<12} {cnt}")
-    print(f"\n  记录最多的物种（Top 20）:")
+    print(f"\n  记录最多的物种 (Top 20) :")
     for sp, cnt in stats["top_species"]:
         print(f"    {sp:<40} {cnt}")
