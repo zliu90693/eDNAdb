@@ -1,0 +1,22 @@
+# 物种列表示例文件
+# 格式：每行一个分类群名称（物种名或属名），# 开头为注释，空行忽略
+#
+# 支持两种查询粒度：
+#   1. 物种名（二名法）：精确匹配该物种
+#   2. 属名（单个词）：获取整属所有物种（BOLD 更有效，NCBI 仍为属名搜索）
+#
+# ─── 示例：入侵物种 ────────────────────────────────────────────
+Harmonia axyridis
+Solenopsis invicta
+Bemisia tabaci
+Lycorma delicatula
+
+# ─── 示例：近缘本土物种 ───────────────────────────────────────
+Harmonia yedoensis
+Harmonia octomaculata
+Solenopsis geminata
+Solenopsis richteri
+
+# ─── 也可以用属名批量获取（推荐配合 BOLD）──────────────────────
+# Harmonia
+# Solenopsis
