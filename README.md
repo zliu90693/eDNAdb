@@ -86,19 +86,22 @@ python main.py stats
 
 输出示例：
 ```
-  数据库统计
-  总记录数:  1247
-  NCBI 来源: 893
-  BOLD 来源: 354
-  物种数量:  12
+数据库统计
+  总记录数:  1836
+  NCBI 来源: 1836
+  BOLD 来源: 0
+  物种数量:  5
 
   按标记分布:
-    COI          1105
-    ITS           142
+    COI          1835
+    COXI         1
 
-  记录最多的物种（Top 20）:
-    Frankliniella occidentalis               456
-    Solenopsis invicta                       321
+  记录最多的物种 (Top 20) :
+    Frankliniella occidentalis               500
+    Solenopsis geminata                      499
+    Frankliniella intonsa                    488
+    Solenopsis invicta                       347
+    Solenopsis fugax                         2
     ...
 ```
 
