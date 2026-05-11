@@ -10,7 +10,7 @@ from config import TARGET_MARKERS
 
 
 def cmd_fetch(args):
-    # 执行数据获取, 优先用命令行物种列表，否则读取文件
+    # 执行数据获取, 优先用命令行物种列表, 否则读取文件
     if args.species:
         species_list = [s.strip() for s in args.species.split(",") if s.strip()]
     elif args.file:
@@ -51,10 +51,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  # 从文件读取物种列表，获取 COI 序列（NCBI + BOLD）
+  # 从文件读取物种列表, 获取 COI 序列 (NCBI + BOLD) 
   python main.py fetch --file species.txt --markers COI
 
-  # 命令行直接指定物种，仅用 NCBI，获取多个标记
+  # 命令行直接指定物种, 仅用 NCBI, 获取多个标记
   python main.py fetch --species "Harmonia axyridis,Harmonia yedoensis" \\
                        --markers COI,ITS --source ncbi
 
@@ -72,28 +72,28 @@ def main():
     fetch_p = subparsers.add_parser("fetch", help="从 NCBI/BOLD 获取条形码数据")
     fetch_p.add_argument(
         "--file", "-f",
-        help="物种列表文件路径（每行一个物种名，# 开头为注释）"
+        help="物种列表文件路径 (每行一个物种名, # 开头为注释) "
     )
     fetch_p.add_argument(
         "--species", "-s",
-        help="直接指定物种名，多个用英文逗号分隔"
+        help="直接指定物种名, 多个用英文逗号分隔"
     )
     fetch_p.add_argument(
         "--markers", "-m",
         default=",".join(TARGET_MARKERS),
-        help=f"条形码标记，逗号分隔（默认: {','.join(TARGET_MARKERS)}）"
+        help=f"条形码标记, 逗号分隔 (默认: {','.join(TARGET_MARKERS)}) "
     )
     fetch_p.add_argument(
         "--source",
         choices=["both", "ncbi", "bold"],
         default="both",
-        help="数据来源（默认: both）"
+        help="数据来源 (默认: both) "
     )
     fetch_p.add_argument(
         "--retmax",
         type=int,
         default=500,
-        help="NCBI 每个物种最大获取数量（默认: 500）"
+        help="NCBI 每个物种最大获取数量 (默认: 500) "
     )
     fetch_p.add_argument(
         "--verbose", "-v",
@@ -107,15 +107,15 @@ def main():
     export_p.add_argument(
         "--output", "-o",
         default="fasta_output",
-        help="输出目录（默认: fasta_output/）"
+        help="输出目录 (默认: fasta_output/) "
     )
     export_p.add_argument(
         "--marker",
-        help="仅导出指定标记（如 COI）"
+        help="仅导出指定标记 (如 COI) "
     )
     export_p.add_argument(
         "--species",
-        help="仅导出指定物种（支持模糊匹配，如 'Harmonia'）"
+        help="仅导出指定物种 (支持模糊匹配, 如 'Harmonia') "
     )
     export_p.set_defaults(func=cmd_export)
 

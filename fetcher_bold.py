@@ -19,7 +19,8 @@ from config import (
 
 logger = logging.getLogger(__name__)
  
-BOLD_API = "https://www.boldsystems.org/index.php/API_Public" # ??? 是这个吗? 为什么用的时候出错了
+# BOLD_API = "https://www.boldsystems.org/index.php/API_Public" # ??? 是这个吗? 为什么用的时候出错了
+BOLD_API = "https://data.boldsystems.org/api"
 
 # BOLD marker 名称映射 (BOLD内部名称 → 标准名称) 
 BOLD_MARKER_MAP = {

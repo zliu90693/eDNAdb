@@ -5,17 +5,17 @@
 #   1. 物种名（二名法）：精确匹配该物种
 #   2. 属名（单个词）：获取整属所有物种（BOLD 更有效，NCBI 仍为属名搜索）
 #
-# ─── 示例：入侵物种 ────────────────────────────────────────────
+# 示例：入侵物种
 Solenopsis invicta
 Solenopsis geminata
 Frankliniella occidentalis
 
-# ─── 示例：近缘本土物种 ───────────────────────────────────────
+# 示例：近缘本土物种
 Solenopsis jacoti
 Solenopsis fugax
 Solenopsis tipuna
 Frankliniella intonsa
 
-# ─── 也可以用属名批量获取（推荐配合 BOLD）──────────────────────
+# 也可以用属名批量获取（推荐配合 BOLD）
 # Harmonia
 # Solenopsis
