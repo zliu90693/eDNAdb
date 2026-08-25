@@ -7,15 +7,3 @@
 #
 # 示例：入侵物种
 Solenopsis invicta
-Solenopsis geminata
-Frankliniella occidentalis
-
-# 示例：近缘本土物种
-Solenopsis jacoti
-Solenopsis fugax
-Solenopsis tipuna
-Frankliniella intonsa
-
-# 也可以用属名批量获取（推荐配合 BOLD）
-# Harmonia
-# Solenopsis

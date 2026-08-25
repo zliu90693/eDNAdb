@@ -34,7 +34,8 @@ MAX_AMBIGUOUS_RATIO = 0.05  # 序列中模糊碱基（N）比例上限
 
 # 请求配置
 NCBI_BATCH_SIZE = 100 # 每次 efetch 的记录数
-BOLD_TIMEOUT = 90 # BOLD 请求超时（秒）
+BOLD_TIMEOUT = 90 # BOLD 查询超时（秒）
+BOLD_DOWNLOAD_TIMEOUT = 300 # BOLD 下载超时（秒），大数据量下载耗时较长
 RETRY_TIMES = 3 # 失败重试次数
 RETRY_DELAY = 5 # 重试等待（秒）
 

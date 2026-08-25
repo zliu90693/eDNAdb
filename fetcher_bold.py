@@ -1,28 +1,31 @@
 # BOLD Systems 数据获取模块
-# 使用 BOLD Public API v4, 无需注册账号
+# 使用 BOLD Portal Public API v4, 无需注册账号
+#
+# 请求流程 (三步):
+#   1. 构造 triplet 查询词:  tax:species:<种名>  或  tax:genus:<属名>
+#   2. GET /api/query?query=<triplet>&extent=full  → 得到 query_id
+#   3. GET /api/documents/{query_id}/download?format=json  → 返回 JSON Lines (NDJSON)
+# 注意: v4 API 查询不支持 marker 过滤, 需在解析阶段按 marker_code 客户端过滤。
 
-import io
-import csv
 import time
 import logging
 import re
-from typing import Optional
+import json
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from config import (
-    BOLD_TIMEOUT, RETRY_TIMES, RETRY_DELAY,
+    BOLD_TIMEOUT, BOLD_DOWNLOAD_TIMEOUT, RETRY_TIMES, RETRY_DELAY,
     SEQ_LENGTH_FILTER, MAX_AMBIGUOUS_RATIO
 )
 
 logger = logging.getLogger(__name__)
- 
-# BOLD_API = "https://www.boldsystems.org/index.php/API_Public" # ??? 是这个吗? 为什么用的时候出错了
-BOLD_API = "https://data.boldsystems.org/api"
 
-# BOLD marker 名称映射 (BOLD内部名称 → 标准名称) 
+BOLD_API = "https://portal.boldsystems.org/api"
+
+# BOLD marker 名称映射 (BOLD 内部名称 → 标准名称)
 BOLD_MARKER_MAP = {
     "COI-5P": "COI",
     "COI-3P": "COI",
@@ -33,17 +36,6 @@ BOLD_MARKER_MAP = {
     "MATK":   "matK",
     "16S":    "16S",
     "18S":    "18S",
-}
-
-# BOLD marker 查询名称
-BOLD_MARKER_QUERY = {
-    "COI":  "COI-5P",
-    "ITS":  "ITS",
-    "ITS2": "ITS2",
-    "rbcL": "RBCL",
-    "matK": "MATK",
-    "16S":  "16S",
-    "18S":  "18S",
 }
 
 
@@ -65,134 +57,129 @@ def _make_session() -> requests.Session:
     })
     return session
 
+
+# 查询词构造
+
+def _build_query(species: str) -> str:
+    # 单词视为属名, 双词视为种名
+    if len(species.split()) == 1:
+        return f"tax:genus:{species}"
+    return f"tax:species:{species}"
+
+
 # 核心请求
 
-def _fetch_bold_tsv(session: requests.Session,
-                    taxon: str, marker_query: str) -> str:
-    # 请求 BOLD combined API, 返回 TSV 文本。
-    # combined 端点同时返回序列和标本元数据。
-    params = {
-        "taxon":  taxon,
-        "marker": marker_query,
-        "format": "tsv",
-    }
-    url = f"{BOLD_API}/combined"
+def _create_query_id(session: requests.Session, query: str) -> str:
+    # 请求 /api/query, 返回 query_id (空串表示失败)。
+    params = {"query": query, "extent": "full"}
+    url = f"{BOLD_API}/query"
 
     try:
         r = session.get(url, params=params, timeout=BOLD_TIMEOUT)
         r.raise_for_status()
-        return r.text
-    except requests.exceptions.Timeout:
-        logger.warning(f"[BOLD] 请求超时: {taxon} / {marker_query}")
-        return ""
+        query_id = (r.json() or {}).get("query_id", "")
+        if not query_id:
+            logger.warning(f"[BOLD] 查询未返回 query_id: {query}")
+        return query_id
     except requests.exceptions.HTTPError as e:
-        logger.warning(f"[BOLD] HTTP 错误 {e.response.status_code}: {taxon}")
+        logger.warning(
+            f"[BOLD] 查询 HTTP 错误 {e.response.status_code}: {query} "
+            f"(响应: {e.response.text[:200]})"
+        )
         return ""
     except requests.RequestException as e:
-        logger.error(f"[BOLD] 请求异常: {e}")
+        logger.error(f"[BOLD] 查询异常: {e}")
         return ""
 
 
-def _fetch_bold_sequence_fasta(session: requests.Session, taxon: str) -> str:
-    # 备用：仅获取序列 FASTA (当 combined 失败时) 
-    params = {"taxon": taxon, "format": "fasta"}
-    url = f"{BOLD_API}/sequence"
+def _download_ndjson(session: requests.Session, query_id: str) -> str:
+    # 下载文档, format=json 返回 JSON Lines (每行一条记录)。
+    params = {"format": "json"}
+    url = f"{BOLD_API}/documents/{query_id}/download"
     try:
-        r = session.get(url, params=params, timeout=BOLD_TIMEOUT)
+        r = session.get(url, params=params, timeout=BOLD_DOWNLOAD_TIMEOUT)
         r.raise_for_status()
         return r.text
     except requests.RequestException as e:
-        logger.error(f"[BOLD] FASTA 备用请求失败: {e}")
+        logger.error(f"[BOLD] 下载失败: {e}")
         return ""
+
+
 # 解析
 
-def _parse_bold_tsv(tsv_text: str, target_species: str,
-                    target_marker: str) -> list[dict]:
+def _parse_bold_ndjson(text: str, target_species: str,
+                       target_marker: str) -> list[dict]:
     """
-    解析 BOLD TSV 响应。
-    BOLD TSV 列众多 (约80列) , 仅提取关键字段。
+    解析 BOLD download 返回的 JSON Lines。
+    每条记录字段众多, 仅提取关键字段。
     同时按 species 和 marker 过滤。
     """
-    if not tsv_text or len(tsv_text.strip()) < 10:
+    if not text or len(text.strip()) < 10:
         return []
 
     records = []
-    reader = csv.DictReader(io.StringIO(tsv_text), delimiter="\t")
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            logger.warning(f"[BOLD] 跳过无法解析的行: {line[:100]}")
+            continue
 
-    # 兼容 BOLD 不同版本的列名变化
-    FIELD_ALIASES = {
-        "species":      ["species_name", "species", "identification"],
-        "genus":        ["genus_name", "genus"],
-        "family":       ["family_name", "family"],
-        "order":        ["order_name", "order"],
-        "sequence":     ["nucleotides", "sequence"],
-        "marker":       ["markercode", "marker_code", "marker"],
-        "accession":    ["processid", "process_id", "sampleid"],
-        "country":      ["country", "collection_country"],
-        "lat":          ["lat", "coord_lat"],
-        "lon":          ["lon", "coord_lon"],
-        "bold_bin":     ["bin_uri", "bin"],
-    }
+        species = (row.get("species") or row.get("identification") or "").strip()
 
-    def get_field(row, key):
-        for alias in FIELD_ALIASES.get(key, [key]):
-            if alias in row:
-                return row[alias]
-        return ""
-
-    for row in reader:
-        species = get_field(row, "species").strip()
-        marker_raw = get_field(row, "marker").strip().upper()
-        sequence = get_field(row, "sequence").strip().upper()
-
-        # 物种过滤：允许模糊匹配 (eg. 查询属名时) 
+        # 物种过滤：允许模糊匹配 (eg. 查询属名时)
         if target_species and not _species_match(species, target_species):
             continue
 
-        # Marker 过滤
+        # Marker 过滤 (v4 API 不支持服务端 marker 过滤)
+        marker_raw = (row.get("marker_code") or "").strip().upper()
         std_marker = BOLD_MARKER_MAP.get(marker_raw, marker_raw)
         if target_marker and std_marker != target_marker:
             continue
 
+        sequence = (row.get("nuc") or "").strip().upper()
         if not sequence:
             continue
 
-        # 解析经纬度
-        try:
-            lat = float(get_field(row, "lat")) if get_field(row, "lat") else None
-        except ValueError:
-            lat = None
-        try:
-            lon = float(get_field(row, "lon")) if get_field(row, "lon") else None
-        except ValueError:
-            lon = None
+        # 解析经纬度 (coord 格式为 [lat, lon])
+        coord = row.get("coord")
+        if isinstance(coord, list) and len(coord) == 2:
+            try:
+                lat, lon = float(coord[0]), float(coord[1])
+            except (TypeError, ValueError):
+                lat, lon = None, None
+        else:
+            lat, lon = None, None
 
-        accession = get_field(row, "accession") or ""
+        accession = (row.get("processid") or "").strip()
         # BOLD processid 唯一, 加前缀区分来源
         if accession and not accession.startswith("BOLD:"):
             accession = f"BOLD:{accession}"
+        if not accession:
+            continue
 
-        genus = get_field(row, "genus") or (species.split()[0] if species else "")
+        genus = (row.get("genus") or "").strip() or (species.split()[0] if species else "")
 
         rec = {
             "source":      "BOLD",
             "accession":   accession,
             "species":     _normalize_species(species),
             "genus":       genus,
-            "family":      get_field(row, "family"),
-            "order_name":  get_field(row, "order"),
+            "family":      (row.get("family") or "").strip(),
+            "order_name":  (row.get("order") or "").strip(),
             "marker":      std_marker or target_marker,
             "sequence":    re.sub(r"[^ACGTRYSWKMBDHVN-]", "", sequence),
             "length":      len(sequence),
-            "country":     get_field(row, "country"),
+            "country":     (row.get("country/ocean") or "").strip() or None,
             "lat":         lat,
             "lon":         lon,
-            "bold_bin":    get_field(row, "bold_bin"),
+            "bold_bin":    (row.get("bin_uri") or "").strip(),
             "description": f"{species} {std_marker} [BOLD]",
         }
-
-        if rec["accession"]:
-            records.append(rec)
+        records.append(rec)
 
     return records
 
@@ -221,6 +208,7 @@ def _normalize_species(name: str) -> str:
         return f"{parts[0]} {parts[1]}"
     return name
 
+
 # 质量过滤
 
 def quality_filter(records: list[dict], marker: str) -> list[dict]:
@@ -246,22 +234,27 @@ def quality_filter(records: list[dict], marker: str) -> list[dict]:
 
 def fetch_from_bold(species: str, marker: str) -> list[dict]:
     """
-    完整流程：请求 BOLD → 解析 TSV → 过滤
+    完整流程：构造查询 → 生成 query_id → 下载 NDJSON → 解析 → 过滤
     支持物种名或属名查询。
     """
     session = _make_session()
-    marker_query = BOLD_MARKER_QUERY.get(marker, marker)
+    query = _build_query(species)
 
-    logger.info(f"[BOLD] 开始获取: {species} / {marker} (query marker: {marker_query})")
+    logger.info(f"[BOLD] 开始获取: {species} / {marker} (query: {query})")
 
-    tsv = _fetch_bold_tsv(session, species, marker_query)
+    query_id = _create_query_id(session, query)
+    if not query_id:
+        logger.warning(f"[BOLD] {species} / {marker}: 无法生成查询, 跳过")
+        return []
 
-    if not tsv:
-        logger.warning(f"[BOLD] {species} / {marker}: 无响应, 尝试仅用物种名重试")
+    ndjson = _download_ndjson(session, query_id)
+
+    if not ndjson:
+        logger.warning(f"[BOLD] {species} / {marker}: 无响应, 稍后重试一次")
         time.sleep(RETRY_DELAY)
-        tsv = _fetch_bold_tsv(session, species, "")  # 不限 marker 重试
+        ndjson = _download_ndjson(session, query_id)
 
-    raw_records = _parse_bold_tsv(tsv, species, marker)
+    raw_records = _parse_bold_ndjson(ndjson, species, marker)
 
     filtered = quality_filter(raw_records, marker)
     logger.info(
