@@ -6,7 +6,7 @@
 
 # 条形码数据库构建工具
 
-从**NCBI GenBank**批量获取物种条形码序列，构建本地SQLite数据库并导出FASTA文件。不依赖Biopython。
+从**NCBI GenBank**和**BOLD**批量获取物种条形码序列，构建本地SQLite数据库并导出FASTA文件。不依赖Biopython。
 
 ---
 

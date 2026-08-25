@@ -6,7 +6,7 @@
 
 # Barcode Database Builder
 
-Batch-retrieve species barcode sequences from **NCBI GenBank**, build a local SQLite database, and export FASTA files. No Biopython dependency required.
+Batch-retrieve species barcode sequences from **NCBI GenBank** and **BOLD**, build a local SQLite database, and export FASTA files. No Biopython dependency required.
 
 ---
 
